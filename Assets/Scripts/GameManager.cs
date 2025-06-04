@@ -16,15 +16,21 @@ public class GameManager : Manager<GameManager>
     List<BaseEntity> team1Entities = new List<BaseEntity>();
     List<BaseEntity> team2Entities = new List<BaseEntity>();
 
-    int unitsPerTeam = 6;
+    int unitsPerTeam = 4;
 
-    public void OnEntityBought(EntitiesDatabaseSO.EntityData entityData)
+    [Header("Enemy Spawn")] 
+    public List<EntitiesDatabaseSO.EntityData> enemySpawnSequence = new List<EntitiesDatabaseSO.EntityData>();
+    public float enemySpawnDelay = 2f;
+
+    int enemySpawnIndex = 0;
+
+    public void OnEntityBought(EntitiesDatabaseSO.EntityData entityData, int lane = 0)
     {
         BaseEntity newEntity = Instantiate(entityData.prefab, team1Parent);
         newEntity.gameObject.name = entityData.name;
         team1Entities.Add(newEntity);
 
-        newEntity.Setup(Team.Team1, GridManager.Instance.GetFreeNode(Team.Team1));
+        newEntity.Setup(Team.Team1, GridManager.Instance.GetFreeNode(Team.Team1, lane));
     }
 
     public List<BaseEntity> GetEntitiesAgainst(Team against)
@@ -45,6 +51,43 @@ public class GameManager : Manager<GameManager>
         Destroy(entity.gameObject);
     }
 
+    public List<BaseEntity> GetTeamEntities(Team team)
+    {
+        return team == Team.Team1 ? team1Entities : team2Entities;
+    }
+
+    public void SacrificeUnit(BaseEntity entity)
+    {
+        if (entity == null || entity.Team != Team.Team1)
+            return;
+
+        PlayerData.Instance.AddBlood(entity.bloodValue);
+        UnitDead(entity);
+    }
+
+    private void Start()
+    {
+        if (enemySpawnSequence.Count > 0)
+            StartCoroutine(SpawnEnemies());
+    }
+
+    IEnumerator SpawnEnemies()
+    {
+        while (enemySpawnIndex < enemySpawnSequence.Count)
+        {
+            SpawnEnemy(enemySpawnSequence[enemySpawnIndex], enemySpawnIndex % GridManager.Instance.laneCount);
+            enemySpawnIndex++;
+            yield return new WaitForSeconds(enemySpawnDelay);
+        }
+    }
+
+    void SpawnEnemy(EntitiesDatabaseSO.EntityData data, int lane)
+    {
+        BaseEntity newEntity = Instantiate(data.prefab, team2Parent);
+        team2Entities.Add(newEntity);
+        newEntity.Setup(Team.Team2, GridManager.Instance.GetFreeNode(Team.Team2, lane));
+    }
+
 
     public void DebugFight()
     {
@@ -55,7 +98,7 @@ public class GameManager : Manager<GameManager>
 
             team2Entities.Add(newEntity);
 
-            newEntity.Setup(Team.Team2, GridManager.Instance.GetFreeNode(Team.Team2));
+            newEntity.Setup(Team.Team2, GridManager.Instance.GetFreeNode(Team.Team2, i % 4));
         }
     }
 }

@@ -17,11 +17,15 @@ public class BaseEntity : MonoBehaviour
     public float attackSpeed = 1f; //Attacks per second
     public float movementSpeed = 1f; //Attacks per second
 
+    [Tooltip("Blood gained when sacrificed")]
+    public int bloodValue = 1;
+
     protected Team myTeam;
     protected BaseEntity currentTarget = null;
     protected Node currentNode;
 
     public Node CurrentNode => currentNode;
+    public Team Team => myTeam;
      
     protected bool HasEnemy => currentTarget != null;
     protected bool IsInRange => currentTarget != null && Vector3.Distance(this.transform.position, currentTarget.transform.position) <= range;
@@ -114,7 +118,7 @@ public class BaseEntity : MonoBehaviour
                 return;
 
             var path = GridManager.Instance.GetPath(currentNode, destination);
-            if (path == null && path.Count >= 1)
+            if (path == null || path.Count < 1)
                 return;
 
             if (path[1].IsOccupied)
