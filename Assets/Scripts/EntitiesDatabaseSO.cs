@@ -13,7 +13,10 @@ public class EntitiesDatabaseSO : ScriptableObject
         public Sprite icon;
 
         public int cost;
+        [Tooltip("Blood required to play this card")]
+        public int bloodCost;
     }
 
     public List<EntityData> allEntities;
 }
+

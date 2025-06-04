@@ -5,8 +5,10 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 public class GridManager : Manager<GridManager>
-{  
+{
     public GameObject terrainGrid;
+
+    public int laneCount = 4;
 
     protected Graph graph;
     protected Dictionary<Team, int> startPositionPerTeam;
@@ -25,26 +27,31 @@ public class GridManager : Manager<GridManager>
 
     public Node GetFreeNode(Team forTeam)
     {
+        for (int lane = 0; lane < laneCount; lane++)
+        {
+            Node n = GetFreeNode(forTeam, lane);
+            if (n != null)
+                return n;
+        }
+        return null;
+    }
+
+    public Node GetFreeNode(Team forTeam, int lane)
+    {
         int startIndex = startPositionPerTeam[forTeam];
+        int direction = startIndex == 0 ? 1 : -1;
         int currentIndex = startIndex;
 
-        while(graph.Nodes[currentIndex].IsOccupied)
+        while (currentIndex >= 0 && currentIndex < graph.Nodes.Count)
         {
-            if(startIndex == 0)
-            {
-                currentIndex++;
-                if (currentIndex == graph.Nodes.Count)
-                    return null;
-            }
-            else
-            {
-                currentIndex--;
-                if (currentIndex == -1)
-                    return null;
-            }
-            
+            Node node = graph.Nodes[currentIndex];
+            if (node.lane == lane && !node.IsOccupied)
+                return node;
+
+            currentIndex += direction;
         }
-        return graph.Nodes[currentIndex];
+
+        return null;
     }
 
     public List<Node> GetPath(Node from, Node to)
@@ -79,7 +86,8 @@ public class GridManager : Manager<GridManager>
         for (int i = 0; i < allTiles.Count; i++)
         {
             Vector3 place = allTiles[i].transform.position;
-            graph.AddNode(place);
+            int lane = i % laneCount;
+            graph.AddNode(place, lane);
         }
 
         var allNodes = graph.Nodes;

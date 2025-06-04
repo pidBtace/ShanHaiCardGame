@@ -7,6 +7,7 @@ public class UIShop : MonoBehaviour
 {
     public List<UICard> allCards;
     public Text money;
+    public Text blood;
 
     private EntitiesDatabaseSO cachedDb;
     private int refreshCost = 1;
@@ -32,13 +33,28 @@ public class UIShop : MonoBehaviour
 
     public void OnCardClick(UICard card, EntitiesDatabaseSO.EntityData cardData)
     {
-        //We should check if we have the money!
-        if(PlayerData.Instance.CanAfford(cardData.cost))
+        if (!PlayerData.Instance.CanAfford(cardData.cost))
+            return;
+
+        if (!PlayerData.Instance.CanPayBlood(cardData.bloodCost))
         {
-            PlayerData.Instance.SpendMoney(cardData.cost);
-            card.gameObject.SetActive(false);
-            GameManager.Instance.OnEntityBought(cardData);
+            int need = cardData.bloodCost - PlayerData.Instance.Blood;
+            var units = GameManager.Instance.GetTeamEntities(Team.Team1);
+            while (need > 0 && units.Count > 0)
+            {
+                GameManager.Instance.SacrificeUnit(units[0]);
+                need--;
+                units = GameManager.Instance.GetTeamEntities(Team.Team1);
+            }
+
+            if (!PlayerData.Instance.CanPayBlood(cardData.bloodCost))
+                return;
         }
+
+        PlayerData.Instance.SpendMoney(cardData.cost);
+        PlayerData.Instance.SpendBlood(cardData.bloodCost);
+        card.gameObject.SetActive(false);
+        GameManager.Instance.OnEntityBought(cardData, 0);
     }
 
     public void OnRefreshClick()
@@ -54,5 +70,7 @@ public class UIShop : MonoBehaviour
     void Refresh()
     {
         money.text = PlayerData.Instance.Money.ToString();
+        if (blood != null)
+            blood.text = PlayerData.Instance.Blood.ToString();
     }
 }
