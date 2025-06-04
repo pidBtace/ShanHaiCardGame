@@ -39,9 +39,9 @@ public class Graph
         return result;
     }
 
-    public void AddNode(Vector3 worldPosition)
+    public void AddNode(Vector3 worldPosition, int lane = 0)
     {
-        nodes.Add(new Node(nodes.Count, worldPosition));
+        nodes.Add(new Node(nodes.Count, worldPosition, lane));
     }
 
     public void AddEdge(Node from, Node to)
@@ -140,13 +140,15 @@ public class Node
 {
     public int index;
     public Vector3 worldPosition;
+    public int lane;
 
     private bool occupied = false;
 
-    public Node(int index, Vector3 worldPosition)
+    public Node(int index, Vector3 worldPosition, int lane = 0)
     {
         this.index = index;
         this.worldPosition = worldPosition;
+        this.lane = lane;
         occupied = false;
     }
 
